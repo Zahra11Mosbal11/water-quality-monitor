@@ -16,6 +16,7 @@ from sklearn.metrics import (accuracy_score, classification_report,
 from sklearn.preprocessing import StandardScaler
 import warnings
 warnings.filterwarnings('ignore')
+import time
 
 # Who Standards
 WHO = {
@@ -255,36 +256,80 @@ for reading, desc in test_cases:
 
 
 #  Analysis of the latest real reading from ThingSpeak
+print("\n" + "=" * 60)
+print("Starting real-time monitoring every 15 seconds...")
+print("Press Ctrl+C to stop")
 print("=" * 60)
-print("latest real reading from ThingSpeak")
-print("=" * 60)
 
-latest      = df[FEATURES].iloc[-1].tolist()
-result_live = hybrid_decision(latest, rf, scaler)
+last_write = time.time()
 
-print(f"\n  pH:          {latest[0]:.3f} {WHO['pH']['unit']}")
-print(f"  Turbidity:   {latest[1]:.3f} {WHO['Turbidity']['unit']}")
-print(f"  Temperature: {latest[2]:.3f} {WHO['Temperature']['unit']}")
-print(f"  EC:          {latest[3]:.3f} {WHO['EC']['unit']}")
-print(f"  DO:          {latest[4]:.3f} {WHO['DO']['unit']}")
-print(f"  DHT Temp:    {latest[5]:.3f} {WHO['DHT_Temp']['unit']}")
-print(f"\n  {result_live['status']} ({result_live['confidence']:.1f}%)")
-print(f" Decision via: {result_live['layer']}")
-if result_live['violations']:
-    print("  violations:")
-    for v in result_live['violations']:
-        print(f"    • {v}")
+while True:
+    try:
+        
+        # Fetching the latest 10 readings to filter the results and access the latest sensor reading
+        url_live = (
+            f"https://api.thingspeak.com/channels/{CHANNEL_ID}/"
+            f"feeds.json?api_key={READ_API_KEY}&results=10"
+        )
+        resp = requests.get(url_live, timeout=10)
+        feeds = resp.json().get('feeds', [])
 
-#  Send the result to ThingSpeak 
-print(f"\n Send the result to ThingSpeak...")
-status_map = {
-    '⚠️  ALARM — UNSAFE':    1,
-    '🟡 SUSPECT — UNCERTAIN': 2,
-    '✅ SAFE — Normal':       0,
-}
-status_code = status_map.get(result_live['status'], 0)
+        #  the latest reading that contains sensor data (where field1 is not None)
+        feed = None
+        for f in reversed(feeds):
+            if f.get('field1') is not None:
+                feed = f
+                break
 
-write_to_thingspeak(
-    confidence  = result_live['confidence'],
-    status_code = status_code
-)
+        if feed is None:
+            feed = feeds[-1] if feeds else {}
+
+        reading = [
+            float(feed.get('field1') or 0),
+            float(feed.get('field2') or 0),
+            float(feed.get('field3') or 0),
+            float(feed.get('field4') or 0),
+            float(feed.get('field5') or 0),
+            float(feed.get('field6') or 0),
+        ]
+
+        # Analyzing the reading 
+        result = hybrid_decision(reading, rf, scaler)
+        ts     = time.strftime('%H:%M:%S')
+
+        # Printing the result
+        print(f"\n[{ts}] ----------------------------------------")
+        print(f"  pH:          {reading[0]:.3f} {WHO['pH']['unit']}")
+        print(f"  Turbidity:   {reading[1]:.3f} {WHO['Turbidity']['unit']}")
+        print(f"  Temperature: {reading[2]:.3f} {WHO['Temperature']['unit']}")
+        print(f"  EC:          {reading[3]:.3f} {WHO['EC']['unit']}")
+        print(f"  DO:          {reading[4]:.3f} {WHO['DO']['unit']}")
+        print(f"  DHT Temp:    {reading[5]:.3f} {WHO['DHT_Temp']['unit']}")
+        print(f"\n  {result['status']} ({result['confidence']:.1f}%)")
+        print(f" Decision via: {result['layer']}")
+        if result['violations']:
+            print("  violations:")
+            for v in result['violations']:
+                print(f"    • {v}")
+
+        #Sending to ThingSpeak
+        status_map = {
+            '⚠️  ALARM — UNSAFE':    1,
+            '🟡 SUSPECT — UNCERTAIN': 2,
+            '✅ SAFE — Normal':       0,
+        }
+        elapsed = time.time() - last_write
+        if elapsed >= INTERVAL_SEC:
+            status_code = status_map.get(result['status'], 0)
+            write_to_thingspeak(result['confidence'], status_code)
+            last_write = time.time()
+
+        time.sleep(INTERVAL_SEC)
+
+    except KeyboardInterrupt:
+        print("\n ⏹ Monitoring stopped.")
+        break
+    except Exception as e:
+        print(f"❌ Error: {e} — retrying...")
+        time.sleep(INTERVAL_SEC)
+
