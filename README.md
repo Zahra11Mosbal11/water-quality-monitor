@@ -24,11 +24,6 @@ An advanced machine learning solution designed to evaluate drinking water safety
 
 ---
 
-## ⚙️ Mathematical Inference Flow
-
-Every incoming sensor vector undergoes the following pipeline before outputting a diagnostic verdict:
-
-$$\text{Raw Telemetry} \longrightarrow \text{StandardScaler Transformation} \longrightarrow \text{Random Forest Matrix Ensemble} \longrightarrow \text{Probability Density Mapping [predict\_proba]}$$
 
 ---
 
@@ -111,6 +106,4 @@ python main.py
 * **Zahra Suliman Abdalla Musbel** 
 * Engineered as an advanced graduation project under professional validation at **SUST (Sudan University of Science and Technology)**.
 
-```
 
-```
