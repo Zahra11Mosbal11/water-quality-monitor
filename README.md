@@ -107,9 +107,10 @@ python main.py
 ## 👩‍💻 Authors & Academic Affiliation
 
 * **Alawya Mozamel Hassan  Albajory**
-  **Safaa Taj Aldeen Hassan Ahmed**
-  **Shahd Anwar Abdulrahman Mohammed Noor**
-  **Zahra Suliman Abdalla Musbel** 
+* **Safaa Taj Aldeen Hassan Ahmed**
+* **Shahd Anwar Abdulrahman Mohammed Noor**
+* **Zahra Suliman Abdalla Musbel**
+  
 * Engineered as an advanced graduation project under professional validation at **SUST (Sudan University of Science and Technology)**.
 
 
