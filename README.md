@@ -4,6 +4,9 @@
 ### 🌍 Real-Time Cloud AI Classification System
 An advanced machine learning solution designed to evaluate drinking water safety based on **World Health Organization (WHO)** standards. This repository contains the standalone core predictive model—a highly optimized **Random Forest Classifier** equipped with a dynamic **Confidence Threshold Guard** to seamlessly navigate gray-zone anomalies and borderline contamination risks.
 
+<img width="1324" height="732" alt="Screenshot 2026-06-12 at 22 54 40" src="https://github.com/user-attachments/assets/860eddd7-884f-48fc-9fa9-2717b00f05f8" />
+
+
 ---
 
 ##  Core AI Features
